@@ -15,6 +15,7 @@ export interface BuildBlocksParams {
   dayStartMinutes: number;
   slidingDiscountPct: number; // 0-100, e.g. 40 means sliding fee = fee * 0.6
   breakMinutes?: number; // buffer inserted between auto-generated back-to-back sessions (default 0)
+  middayBreakMinutes?: number; // lunch/rest gap inserted near the middle of each working day (default 0)
   dayEndMinutes?: number; // configured end-of-day; when provided, drives overflow detection
 }
 
@@ -81,16 +82,23 @@ export function buildScheduleBlocks(params: BuildBlocksParams): BuildBlocksResul
   }
 
   // 4. Lay out each day back-to-back from dayStartMinutes, inserting a break
-  //    between consecutive sessions. 5. Detect overflow.
+  //    between consecutive sessions and a longer gap near the midpoint of the
+  //    day's session count for lunch/rest. 5. Detect overflow.
   const breakMinutes = params.breakMinutes ?? 0;
+  const middayBreakMinutes = params.middayBreakMinutes ?? 0;
   const blocks: InsertScheduleBlock[] = [];
   const overflowDays: number[] = [];
   for (const day of days) {
     const dayRequests = byDay.get(day)!;
+    const middayIndex = Math.ceil(dayRequests.length / 2);
     let startMinutes = dayStartMinutes;
     let totalMinutes = 0;
     let lastEnd = dayStartMinutes;
-    for (const req of dayRequests) {
+    dayRequests.forEach((req, i) => {
+      if (i === middayIndex && middayBreakMinutes > 0 && dayRequests.length > 1) {
+        startMinutes += middayBreakMinutes;
+        totalMinutes += middayBreakMinutes;
+      }
       blocks.push({
         scenarioId,
         day,
@@ -104,7 +112,7 @@ export function buildScheduleBlocks(params: BuildBlocksParams): BuildBlocksResul
       lastEnd = startMinutes + req.durationMinutes;
       startMinutes += req.durationMinutes + breakMinutes;
       totalMinutes += req.durationMinutes;
-    }
+    });
     const overflow =
       params.dayEndMinutes != null ? lastEnd > params.dayEndMinutes : totalMinutes > 12 * 60;
     if (dayRequests.length > 0 && overflow) overflowDays.push(day);
