@@ -1,11 +1,15 @@
 {
-  "name": "@local/practice-financial-core",
+  "name": "@cawilliamhc/practice-financial-core",
   "version": "0.2.0",
-  "private": true,
-  "description": "Shared, framework-agnostic financial modeling engine for practice-studio-desktop and client-studio-desktop: schedule-block metrics, expense totals, tax/retirement/take-home projections, and multi-year fee-increase modeling. Consumed via a file: dependency by both apps — bump the version here and rebuild to ship a change to both.",
+  "description": "Shared, framework-agnostic financial modeling engine for practice-studio-desktop and client-studio-desktop: schedule-block metrics, expense totals, tax/retirement/take-home projections, and multi-year fee-increase modeling. Published to npm and consumed as a normal dependency by both apps — bump the version here, build, and publish to ship a change to both.",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "license": "MIT",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
